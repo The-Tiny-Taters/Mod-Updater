@@ -6,9 +6,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import net.minecraft.text.LiteralText
-import net.minecraft.util.Formatting
 import the_tiny_taters.mod_updater.data_fetchers.Fetchers
-import the_tiny_taters.mod_updater.ext.toHashAlgorithm
 import the_tiny_taters.mod_updater.mod_data.DirectMod
 import the_tiny_taters.mod_updater.mod_data.IHash
 import the_tiny_taters.mod_updater.mod_data.ModBase
@@ -42,23 +40,41 @@ class DownloadCommand {
                     } }
 
                     word("hash-algorithm") {
-                        suggests { _, builder ->
-                            HashTypes.values().forEach { 
-                                builder.suggest(it.toString())
-                            }
-                            
-                            builder.buildFuture()
+                        literal("sha1") {
+                            executes { GlobalScope.launch {
+                                downloadMod(
+                                    it.source,
+                                    DirectMod(
+                                        getString(it, "url"),
+                                        HashTypes.SHA1
+                                    )
+                                )
+                            } }
                         }
 
-                        executes { GlobalScope.launch {
-                            downloadMod(
-                                it.source,
-                                DirectMod(
-                                    getString(it, "url"),
-                                    getString(it, "hash-algorithm").toHashAlgorithm()
+                        literal("sha256") {
+                            executes { GlobalScope.launch {
+                                downloadMod(
+                                    it.source,
+                                    DirectMod(
+                                        getString(it, "url"),
+                                        HashTypes.SHA256
+                                    )
                                 )
-                            )
-                        } }
+                            } }
+                        }
+
+                        literal("md5") {
+                            executes { GlobalScope.launch {
+                                downloadMod(
+                                    it.source,
+                                    DirectMod(
+                                        getString(it, "url"),
+                                        HashTypes.MD5
+                                    )
+                                )
+                            } }
+                        }
                     }
                 }
             }
@@ -126,7 +142,7 @@ class DownloadCommand {
 
         if (downloadJob.await()) {
             source.sendFeedback(
-                LiteralText("§7Downloaded §8${mod.fileName}."),
+                LiteralText("§7Downloaded §8${mod.fileName}§7."),
                 true
             )
 
@@ -143,7 +159,7 @@ class DownloadCommand {
 
                     if (hashCheckJob.await()) {
                         source.sendFeedback(
-                            LiteralText("§aHashes match! §9${mod.name} §ahas been successfully downloaded."),
+                            LiteralText("§aHashes match!\n§9${mod.name} §ahas been successfully downloaded."),
                             true
                         )
                     } else {
@@ -182,7 +198,7 @@ class DownloadCommand {
                     } else {
                         source.sendFeedback(
                             LiteralText(
-                                        "§9${mod.name} §ahas been successfully downloaded." +
+                                        "§9${mod.name} §ahas been successfully downloaded.\n" +
                                                 "§cCannot verify hash of mods downloaded from direct links" +
                                                 "§c, use with caution!"
                             ),
@@ -193,7 +209,7 @@ class DownloadCommand {
 
                 else -> {
                     source.sendError(
-                        LiteralText("HOW")
+                        LiteralText("§chow did you manage to do this :concen:")
                     )
                 }
             }
