@@ -101,9 +101,15 @@ object ModrinthDataFetcher : FetcherBase() {
      * @return whether or not information was successfully retrieved
      */
     private fun getVersionData(mod: ModrinthMod): Boolean {
-        val data = khttp.get(
+        val httpResponse = khttp.get(
             "https://api.modrinth.com/api/v1/version/${mod.versionId}"
-        ).jsonObject
+        )
+
+        val data = if (httpResponse.statusCode == 404) {
+            return false
+        } else {
+            httpResponse.jsonObject
+        }
 
         return try {
             mod.fileName = ((data["files"] as JSONArray)[0] as JSONObject)["filename"].toString()
